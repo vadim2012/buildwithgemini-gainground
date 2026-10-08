@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GainGround · Editorial Aquifer Restoration Network</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,400;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ==========================================================================
+     GainGround Design System: Editorial Aquifer Integrated Standard
+     ========================================================================== */
+  :root {
+    --gg-canvas: #f6f3ec;
+    --gg-canvas-subtle: #faf8f4;
+    --gg-card-bg: #fffdf9;
+    --gg-card-border: #e6dfd3;
+    --gg-card-border-strong: #d5cbba;
+    
+    --gg-ink-primary: #24211d;
+    --gg-ink-secondary: #5a544b;
+    --gg-ink-tertiary: #8b8374;
+    
+    --ks-green: #028858;
+    --ks-green-hover: #02734a;
+    --ks-green-track: #e2dcd0;
+
+    --mu-crimson: #c8382c;
+    --mu-crimson-hover: #b02a20;
+
+    --font-serif: "Fraunces", Georgia, serif;
+    --font-sans: "Inter", -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+
+    --radius-card: 14px;
+    --radius-inner: 10px;
+    --shadow-editorial: 0 4px 20px rgba(50, 42, 30, 0.08), 0 1px 3px rgba(50, 42, 30, 0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--gg-canvas);
+    color: var(--gg-ink-primary);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Editorial Top Navigation */
+  header.editorial-nav {
+    background: linear-gradient(180deg, #ecd9be 0%, #e5cfb1 100%);
+    border-bottom: 1px solid #d2ba98;
+    height: 64px;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(60, 45, 25, 0.06);
+    z-index: 100;
+  }
+  .nav-left { display: flex; align-items: center; gap: 2rem; }
+  .logo-block { display: flex; align-items: center; gap: 0.65rem; text-decoration: none; color: inherit; }
+  .logo-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #24211d;
+    color: #f7eedb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+  .logo-title {
+    font-family: var(--font-serif);
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #24211d;
+  }
+  .nav-menu { display: flex; gap: 1.8rem; font-size: 0.92rem; font-weight: 600; }
+  .nav-item { color: #4a4135; text-decoration: none; transition: color 0.15s; }
+  .nav-item:hover, .nav-item.active { color: #028858; }
+
+  .nav-right { display: flex; align-items: center; gap: 1rem; }
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #3b3225;
+  }
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: #24211d;
+    color: #f7eedb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+  }
+
+  /* Main Workspace */
+  .workspace {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* Left Panel: Editorial Feed */
+  .editorial-pane {
+    width: 720px;
+    background: var(--gg-canvas);
+    border-right: 1px solid var(--gg-card-border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .feed-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.75rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  .feed-header-title {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--gg-ink-primary);
+    line-height: 1.2;
+    margin-bottom: -0.25rem;
+  }
+
+  /* The Integrated Editorial Card */
+  .editorial-card {
+    background: var(--gg-card-bg);
+    border: 1px solid var(--gg-card-border);
+    border-radius: var(--radius-card);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-editorial);
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+  }
+
+  /* Photo Banner with Badges */
+  .card-hero-photo {
+    width: 100%;
+    height: 190px;
+    border-radius: var(--radius-inner);
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: flex-end;
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  .card-hero-photo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-inner);
+    background: linear-gradient(180deg, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.7) 100%);
+  }
+  .photo-badge-place {
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(6px);
+    color: #24211d;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .photo-badge-target {
+    position: relative;
+    z-index: 2;
+    background: #028858;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.35rem 0.8rem;
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(2, 136, 88, 0.4);
+  }
+
+  /* Champion Section & Quote */
+  .champion-section {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+  }
+  .champ-portrait-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+  .champ-photo {
+    width: 115px;
+    height: 135px;
+    border-radius: var(--radius-inner);
+    background-size: cover;
+    background-position: center;
+    border: 2px solid #ecd9be;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  }
+  .champ-name {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--gg-ink-primary);
+  }
+  .champ-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .champ-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gg-ink-tertiary);
+  }
+  .champ-quote {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    line-height: 1.38;
+    color: var(--gg-ink-primary);
+    font-style: italic;
+    letter-spacing: -0.01em;
+  }
+
+  /* Technical Hydrogeology Aquifer Cross-Section Diagram */
+  .aquifer-diagram-container {
+    background: #fbf7ee;
+    border: 1px solid var(--gg-card-border);
+    border-radius: var(--radius-inner);
+    padding: 0.65rem 0.85rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .aquifer-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .diagram-callout-box {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #b91c1c;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  /* Kickstarter Triplet & Progress Bar */
+  .ks-campaign-module {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    border-top: 1px solid #ece4d8;
+    padding-top: 0.9rem;
+  }
+  .ks-logo-badge {
+    font-family: var(--font-serif);
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #028858;
+    letter-spacing: 0.02em;
+  }
+  .ks-amount-hero {
+    font-family: var(--font-serif);
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--gg-ink-primary);
+    line-height: 1;
+  }
+  .ks-amount-hero span {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--gg-ink-secondary);
+    font-weight: 500;
+    margin-left: 0.3rem;
+  }
+  .ks-bar-track {
+    width: 100%;
+    height: 10px;
+    background: var(--ks-green-track);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 0.15rem;
+  }
+  .ks-bar-fill {
+    height: 100%;
+    background: #028858;
+    border-radius: 5px;
+  }
+  .ks-metrics-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.84rem;
+    color: var(--gg-ink-secondary);
+  }
+  .ks-metrics-row strong {
+    color: var(--gg-ink-primary);
+    font-weight: 700;
+  }
+
+  /* Meetup Module Integration */
+  .meetup-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: #faf6ef;
+    border: 1px solid var(--gg-card-border);
+    border-radius: var(--radius-inner);
+    padding: 0.85rem 1rem;
+  }
+  .meetup-date-tile {
+    width: 50px;
+    height: 50px;
+    background: #fff;
+    border: 1px solid #e0d5c3;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .tile-month { font-size: 0.65rem; font-weight: 800; color: var(--mu-crimson); text-transform: uppercase; }
+  .tile-day { font-size: 1.25rem; font-weight: 800; color: var(--gg-ink-primary); line-height: 1; }
+
+  .meetup-meta { flex: 1; }
+  .meetup-event-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--gg-ink-primary);
+  }
+  .meetup-attendees {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+  }
+  .avatar-cluster { display: flex; }
+  .avatar-mini {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    margin-left: -5px;
+    background: #555;
+    color: #fff;
+    font-size: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+  .avatar-mini:first-child { margin-left: 0; }
+  .attendees-text { font-size: 0.75rem; color: var(--gg-ink-secondary); font-weight: 500; }
+
+  .btn-rsvp-action {
+    background: var(--mu-crimson);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.2rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-rsvp-action:hover { background: var(--mu-crimson-hover); }
+
+  /* Interactive Concierge Dock */
+  .concierge-dock {
+    border-top: 1px solid var(--gg-card-border);
+    background: #fffdf9;
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .chips-scroll { display: flex; gap: 0.45rem; overflow-x: auto; padding-bottom: 0.2rem; }
+  .prompt-chip {
+    background: #f4eee2;
+    border: 1px solid var(--gg-card-border);
+    padding: 0.35rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--gg-ink-primary);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .prompt-chip:hover { background: #e8decd; }
+
+  .chat-row { display: flex; gap: 0.5rem; }
+  .chat-row input {
+    flex: 1;
+    padding: 0.7rem 0.95rem;
+    border: 1px solid var(--gg-card-border-strong);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    background: #fff;
+  }
+  .chat-row input:focus { outline: none; border-color: #028858; }
+  .chat-row button {
+    background: #24211d;
+    color: #fff;
+    border: none;
+    padding: 0 1.25rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  /* Right: Watershed Cartography Pane */
+  .cartography-pane {
+    flex: 1;
+    position: relative;
+    background: #e3ded5;
+  }
+  #map { width: 100%; height: 100%; }
+
+  /* Floating Impact Card */
+  .impact-floating-card {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    background: rgba(255, 253, 249, 0.96);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--gg-card-border);
+    border-radius: var(--radius-inner);
+    padding: 1.2rem 1.35rem;
+    width: 320px;
+    box-shadow: var(--shadow-editorial);
+    z-index: 1000;
+  }
+  .impact-floating-card h4 {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--gg-ink-primary);
+    margin-bottom: 0.65rem;
+  }
+  .impact-list { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+  .impact-item {
+    font-size: 0.82rem;
+    color: var(--gg-ink-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.35;
+  }
+  .impact-bullet {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #028858;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .impact-item strong { color: var(--gg-ink-primary); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- Top Editorial Nav -->
+<header class="editorial-nav">
+  <div class="nav-left">
+    <a href="#" class="logo-block">
+      <div class="logo-mark">G</div>
+      <div class="logo-title">GainGround</div>
+    </a>
+    <nav class="nav-menu">
+      <a href="#" class="nav-item active">Explore</a>
+      <a href="#" class="nav-item" onclick="sendPrompt('Tell me about active projects on GainGround')">Projects</a>
+      <a href="#" class="nav-item" onclick="sendPrompt('Show upcoming community restoration meetups')">Community</a>
+      <a href="#" class="nav-item" onclick="sendPrompt('How does GainGround measure aquifer recharge?')">Science & Data</a>
+    </nav>
+  </div>
+
+  <div class="nav-right">
+    <div class="user-badge">
+      <div class="user-avatar">EC</div>
+      <span>Elena Chen (Organizer)</span>
+    </div>
+  </div>
+</header>
+
+<!-- Main Workspace -->
+<div class="workspace">
+
+  <!-- Left: Editorial Pane with Integrated Aquifer Card -->
+  <section class="editorial-pane">
+    <div class="feed-scroll" id="feed-container">
+      
+      <div class="feed-header-title">Coyote Creek Editorial Campaign</div>
+
+      <!-- Main Editorial Aquifer Integrated Card -->
+      <article class="editorial-card">
+        
+        <!-- Photo Banner: Actual Coyote Creek Riparian Corridor -->
+        <div class="card-hero-photo" style="background-image: url('https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80');">
+          <div class="photo-badge-place">📍 East San Jose · Coyote Creek Corridor</div>
+          <div class="photo-badge-target">🎯 Target: +450 Acre-Feet/Yr</div>
+        </div>
+
+        <!-- Champion Section & Quote -->
+        <div class="champion-section">
+          <div class="champ-portrait-wrap">
+            <!-- Elena Chen Portrait: Outdoor Hydrologist in Field Gear -->
+            <div class="champ-photo" style="background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=350&q=80');"></div>
+            <div class="champ-name">Elena Chen</div>
+          </div>
+          <div class="champ-content">
+            <div class="champ-label">Champion</div>
+            <div class="champ-quote">
+              “I grew up fishing this creek with my grandfather. We can bring the living sponge back.”
+            </div>
+
+            <!-- Integrated Geological Cross-Section Diagram -->
+            <div class="aquifer-diagram-container">
+              <svg class="aquifer-svg" viewBox="0 0 460 145" xmlns="http://www.w3.org/2000/svg">
+                <!-- Top Soil Strata -->
+                <path d="M 0,22 Q 120,18 240,24 T 460,20 L 460,42 Q 240,46 0,42 Z" fill="#d8c3aa"/>
+                <text x="12" y="34" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="600" fill="#4a3e31">Top Soil</text>
+
+                <!-- Alluvial Gravels & Sands -->
+                <path d="M 0,42 Q 240,46 460,42 L 460,74 Q 280,82 0,72 Z" fill="#edd9c2"/>
+                <text x="12" y="60" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="600" fill="#5c4c3b">Alluvial Gravels & Sands</text>
+
+                <!-- Clay Aquitard -->
+                <path d="M 0,72 Q 280,82 460,74 L 460,94 Q 260,102 0,92 Z" fill="#c7bcab"/>
+                <text x="12" y="85" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="600" fill="#4d4439">Clay Aquitard</text>
+
+                <!-- Deep Saturated Aquifer -->
+                <path d="M 0,92 Q 260,102 460,94 L 460,132 L 0,132 Z" fill="#99c2db"/>
+                <text x="12" y="114" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="600" fill="#1e3a8a">Deep Aquifer</text>
+
+                <!-- Bedrock line -->
+                <line x1="0" y1="132" x2="460" y2="132" stroke="#6b7280" stroke-width="2" stroke-dasharray="4 2"/>
+                <text x="12" y="142" font-family="'JetBrains Mono', monospace" font-size="9" fill="#6b7280">Bedrock</text>
+
+                <!-- Water Table Line & Cone of Depression -->
+                <path d="M 0,55 Q 160,57 260,65 Q 320,74 340,96 Q 360,74 420,60 T 460,56" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-dasharray="3 3"/>
+                <polygon points="175,54 181,46 169,46" fill="#2563eb"/>
+                <polygon points="340,94 346,86 334,86" fill="#2563eb"/>
+
+                <!-- Drawdown Vector Arrow -->
+                <g transform="translate(325, 50)">
+                  <line x1="15" y1="0" x2="15" y2="35" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+                  <polygon points="15,44 6,32 24,32" fill="#dc2626"/>
+                  <rect x="28" y="8" width="95" height="24" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="1.2"/>
+                  <text x="34" y="24" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#dc2626">-4.2 ft/year</text>
+                  <text x="34" y="39" font-family="'Inter', sans-serif" font-size="8" font-weight="700" fill="#7f1d1d">Drawdown</text>
+                </g>
+              </svg>
+
+              <div class="diagram-callout-box">
+                <span>⚠️ Nitrate: <strong>38.4 ppm</strong></span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Kickstarter Campaign Section -->
+        <div class="ks-campaign-module">
+          <div class="ks-logo-badge">KICKSTARTER</div>
+          <div class="ks-amount-hero">
+            $18,200 <span>pledged of $25,000 goal</span>
+          </div>
+          <div class="ks-bar-track">
+            <div class="ks-bar-fill" style="width: 73%;"></div>
+          </div>
+          <div class="ks-metrics-row">
+            <div><strong>142</strong> backers</div>
+            <div>(73%)</div>
+            <div><strong>18</strong> days left</div>
+          </div>
+        </div>
+
+        <!-- Meetup Module Integration -->
+        <div class="meetup-row">
+          <div class="meetup-date-tile">
+            <span class="tile-month">OCT</span>
+            <span class="tile-day">24</span>
+          </div>
+          <div class="meetup-meta">
+            <div class="meetup-event-title">Coyote Creek Restoration Volunteer Day</div>
+            <div class="meetup-attendees">
+              <div class="avatar-cluster">
+                <div class="avatar-mini" style="background:#2563eb;">D</div>
+                <div class="avatar-mini" style="background:#059669;">M</div>
+                <div class="avatar-mini" style="background:#d97706;">K</div>
+                <div class="avatar-mini" style="background:#7c3aed;">S</div>
+              </div>
+              <span class="attendees-text">David, Maria, Ken +34 others attending</span>
+            </div>
+          </div>
+          <button class="btn-rsvp-action" onclick="sendPrompt('RSVP me for Elena Chen\'s Coyote Creek bioswale meetup on Oct 24')">
+            RSVP Volunteer →
+          </button>
+        </div>
+
+      </article>
+
+    </div>
+
+    <!-- Concierge Dock -->
+    <div class="concierge-dock">
+      <div class="chips-scroll">
+        <button class="prompt-chip" onclick="sendPrompt('Tell me about Elena Chen\'s Coyote Creek campaign')">🌿 Elena's Mission</button>
+        <button class="prompt-chip" onclick="sendPrompt('RSVP me for Elena Chen\'s Coyote Creek bioswale meetup on Oct 24')">📅 RSVP Coyote Creek</button>
+        <button class="prompt-chip" onclick="sendPrompt('Back Elena Chen\'s campaign with $100 pledge')">💵 Back $100</button>
+        <button class="prompt-chip" onclick="sendPrompt('Calculate aquifer recharge impact for 30000 sq ft bioswale in San Jose')">📐 Hydrology Sandbox</button>
+      </div>
+      <form id="chat-form" class="chat-row">
+        <input id="query-input" placeholder="Ask GainGround Concierge about aquifer baselines or projects..." autocomplete="off">
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Right: Watershed Cartography Pane -->
+  <main class="cartography-pane">
+    <div id="map"></div>
+
+    <!-- Floating Impact Card (from screenshot mockup) -->
+    <div class="impact-floating-card">
+      <h4>Community Impact:</h4>
+      <ul class="impact-list">
+        <li class="impact-item">
+          <div class="impact-bullet"></div>
+          <div><strong>+350 Volunteers</strong> Mobilized in Santa Clara</div>
+        </li>
+        <li class="impact-item">
+          <div class="impact-bullet"></div>
+          <div><strong>1,200 Native Trees</strong> and Riparian Plugs Planted</div>
+        </li>
+        <li class="impact-item">
+          <div class="impact-bullet"></div>
+          <div><strong>85% Reduction</strong> in Invasive Runoff in Pilot Zone</div>
+        </li>
+        <li class="impact-item">
+          <div class="impact-bullet"></div>
+          <div><strong>25% Increase</strong> in Groundwater Recharge Rate (Est.)</div>
+        </li>
+      </ul>
+    </div>
+  </main>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // Initialize Leaflet
+  const map = L.map('map', { zoomControl: false }).setView([37.3382, -121.8863], 12);
+  L.control.zoom({ position: 'topright' }).addTo(map);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Natural River Curves for Coyote Creek & Guadalupe River
+  const coyoteCreekPath = [
+    [37.435, -121.925], [37.395, -121.890], [37.370, -121.868],
+    [37.355, -121.850], [37.330, -121.835], [37.280, -121.790],
+    [37.210, -121.720], [37.140, -121.650]
+  ];
+
+  const guadalupeRiverPath = [
+    [37.420, -121.975], [37.380, -121.935], [37.344, -121.891],
+    [37.300, -121.870], [37.240, -121.850]
+  ];
+
+  L.polyline(coyoteCreekPath, {
+    color: '#028858',
+    weight: 5,
+    opacity: 0.85,
+    lineCap: 'round',
+    lineJoin: 'round'
+  }).addTo(map).bindPopup("<strong>Coyote Creek Riparian Corridor</strong><br/>Target: +450 Acre-Feet/Yr recharge.");
+
+  L.polyline(guadalupeRiverPath, {
+    color: '#0ea5e9',
+    weight: 4.5,
+    opacity: 0.85,
+    lineCap: 'round',
+    lineJoin: 'round'
+  }).addTo(map).bindPopup("<strong>Guadalupe River Corridor</strong><br/>Biochar toxin interceptor project site.");
+
+  // Hotspot Circles
+  L.circle([37.355, -121.850], {
+    color: "#dc2626",
+    fillColor: "#dc2626",
+    fillOpacity: 0.22,
+    weight: 1.5,
+    radius: 1200
+  }).addTo(map);
+
+  L.circle([37.344, -121.891], {
+    color: "#dc2626",
+    fillColor: "#dc2626",
+    fillOpacity: 0.22,
+    weight: 1.5,
+    radius: 1500
+  }).addTo(map);
+
+  // Project Restoration Pin
+  L.circleMarker([37.355, -121.850], {
+    radius: 10,
+    color: "#fff",
+    fillColor: "#028858",
+    fillOpacity: 1,
+    weight: 3
+  }).addTo(map).bindPopup(`
+    <strong style="color:#028858;">🟢 Coyote Creek Restoration Project</strong><br/>
+    <strong>Lead Champion:</strong> Elena Chen<br/>
+    <strong>Goal:</strong> +450 Acre-Feet/Yr<br/>
+    <strong>Next Meetup:</strong> Oct 24 at Coyote Creek Trailhead
+  `);
+
+  // Chat / Concierge Interactions
+  const chatForm = document.getElementById('chat-form');
+  const queryInput = document.getElementById('query-input');
+
+  async function sendPrompt(text) {
+    if (!text.trim()) return;
+    queryInput.value = '';
+
+    alert("GainGround Concierge Action:\n\nProcessing request: " + text);
+
+    try {
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+      });
+      const data = await resp.json();
+      alert("GainGround Response:\n\n" + data.reply);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    sendPrompt(queryInput.value);
+  });
+</script>
+</body>
+</html>
